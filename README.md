@@ -1,2 +1,2 @@
 # codebox
-Sample or utility code
+Sample or utility code.
