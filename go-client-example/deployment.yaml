@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xiong-go-client-test
+  labels:
+    tags.datadoghq.com/env: 'dev'
+    tags.datadoghq.com/service: xiong-go-client-test
+    tags.datadoghq.com/version: '1.0.0'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xiong-go-client-test
+  template:
+    metadata:
+      labels:
+        app: xiong-go-client-test
+        tags.datadoghq.com/env: 'dev'
+        tags.datadoghq.com/service: xiong-go-client-test
+        tags.datadoghq.com/version: '1.0.0'
+      annotations:
+        # ad.datadoghq.com/fastapi-strawberry-example-123.check_names: '["fastapi-strawberry-example-123"]'
+        # ad.datadoghq.com/fastapi-strawberry-example-123.init_configs: '[{}]'
+        # ad.datadoghq.com/fastapi-strawberry-example-123.instances: '[{}]'
+    spec:
+      terminationGracePeriodSeconds: 0
+      serviceAccountName: xiong-go-client-test
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - xiong-test-private
+      tolerations:
+        - key: 'dedicated'
+          operator: 'Equal'
+          value: 'xiong-test-private'
+          effect: 'NoSchedule'
+      containers:
+        - name: test
+          image: debian:latest
+          command: ['sleep', 'infinity']
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
