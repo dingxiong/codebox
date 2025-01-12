@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flask-example
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-example
+  labels:
+    app: flask-example
+    service: flask-example
+spec:
+  ports:
+    - port: 8000
+      name: http
+  selector:
+    app: flask-example
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-example
+  labels:
+    tags.datadoghq.com/env: 'dev'
+    tags.datadoghq.com/service: 'flask-example'
+    tags.datadoghq.com/version: '1.0.0'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-example
+  template:
+    metadata:
+      labels:
+        app: flask-example
+        tags.datadoghq.com/env: 'dev'
+        tags.datadoghq.com/service: 'flask-example'
+        tags.datadoghq.com/version: '1.0.0'
+      annotations:
+        # ad.datadoghq.com/flask-example-123.check_names: '["flask-example-123"]'
+        # ad.datadoghq.com/flask-example-123.init_configs: '[{}]'
+        # ad.datadoghq.com/flask-example-123.instances: '[{}]'
+    spec:
+      terminationGracePeriodSeconds: 0
+      serviceAccountName: flask-example
+      containers:
+        - name: flask-example
+          image: dingxiong/flask-example
+          # command: ["/bin/sleep", "365d"]
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+---
+

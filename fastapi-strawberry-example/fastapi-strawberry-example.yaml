@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fastapi-strawberry-example
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-strawberry-example
+  labels:
+    app: fastapi-strawberry-example
+    service: fastapi-strawberry-example
+spec:
+  ports:
+    - port: 8123
+      name: http
+  selector:
+    app: fastapi-strawberry-example
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-strawberry-example
+  labels:
+    tags.datadoghq.com/env: 'dev'
+    tags.datadoghq.com/service: 'fastapi-strawberry-example'
+    tags.datadoghq.com/version: '1.0.0'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-strawberry-example
+  template:
+    metadata:
+      labels:
+        app: fastapi-strawberry-example
+        tags.datadoghq.com/env: 'dev'
+        tags.datadoghq.com/service: 'fastapi-strawberry-example'
+        tags.datadoghq.com/version: '1.0.0'
+      annotations:
+        # ad.datadoghq.com/fastapi-strawberry-example-123.check_names: '["fastapi-strawberry-example-123"]'
+        # ad.datadoghq.com/fastapi-strawberry-example-123.init_configs: '[{}]'
+        # ad.datadoghq.com/fastapi-strawberry-example-123.instances: '[{}]'
+    spec:
+      terminationGracePeriodSeconds: 0
+      serviceAccountName: fastapi-strawberry-example
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - staging-product-private
+      tolerations:
+        - key: 'dedicated'
+          operator: 'Equal'
+          value: 'staging-product-private'
+          effect: 'NoSchedule'
+      containers:
+        - name: fastapi-strawberry-example
+          image: dingxiong/fastapi-strawberry-example
+          # command: ["/bin/sleep", "365d"]
+          command:
+            - uvicorn
+            - app:app
+            - --reload
+            - --port
+            - '8123'
+            - --host
+            - '0.0.0.0'
+          # imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+---
+
