@@ -60,6 +60,9 @@ class Lexer:
         self.next_idx: int = 0
         self.current_token: Token | None = None
 
+        # a stack to detach unbalanced delimiters such as parenthesis and bracket.
+        self.delimiter_stack = []
+
     def _skip_white_spaces(self) -> None:
         while self.next_idx < len(self.code) and self.code[self.next_idx] in [
             " ",
@@ -86,8 +89,17 @@ class Lexer:
         assert self.has_next()
         c = self.code[self.next_idx]
         match c:
-            case "(" | ")" | "[" | "]" | "*" | "/":
+            case "*" | "/":
                 self.current_token = Operator(self.next_idx, self.next_idx + 1, str(c))
+            case "(" | "[":
+                self.current_token = Operator(self.next_idx, self.next_idx + 1, str(c))
+                self.delimiter_stack.append(c)
+            case ")" | "]":
+                self.current_token = Operator(self.next_idx, self.next_idx + 1, str(c))
+                assert self.delimiter_stack and self.delimiter_stack[-1] == (
+                    "(" if c == ")" else "["
+                ), f"Unbanced delimiter found {c}"
+                self.delimiter_stack.pop()
             case "+":
                 if (
                     self.next_idx + 1 < len(self.code)
@@ -286,5 +298,8 @@ if __name__ == "__main__":
 
     if test in ["t6", "all"]:
         print("==== test 6 ====")
-        e = parse("a---b) * c")
-        print(e)
+        try:
+            e = parse("a---b) * c")
+            print(e)
+        except AssertionError as err:
+            print(err)
