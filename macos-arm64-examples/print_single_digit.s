@@ -1,3 +1,6 @@
+// Every basic program to print out a single digit.
+// It does not use glibc functions.
+// 
 // how to run 
 // as -o print_single_digit.o print_single_digit.s  
 // ld -o print_single_digit print_single_digit.o -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path` -e _start -arch arm64
@@ -16,7 +19,7 @@ _start:
     ldr x0, [x0]
 
     add x0, x0, #48   // Convert the digit to ASCII. '0' = 48.
-    str w0, [sp, #-16]! 
+    str x0, [sp, #-16]! 
 
     // Print the digit
     mov x0, #1        // File descriptor (stdout)
